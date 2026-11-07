@@ -101,7 +101,8 @@ final class PhotoAlbum {
 
     /** Address of a picture sized to the screen (Google resizes on its side, so downloads stay small). */
     static String sized(String base, int w, int h) {
-        return base + "=w" + w + "-h" + h;
+        // width-limited only: a "w-h" box would shrink tall pictures to fit inside it, and they'd then be blown up to fill the screen
+        return h > 0 ? base + "=w" + w + "-h" + h : base + "=w" + w;
     }
 
     private static String join(List<String> l) {

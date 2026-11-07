@@ -312,7 +312,7 @@ public class PhotoDream extends DreamService implements PlayerState.Listener {
 
     private Bitmap download(String base) {
         try {
-            HttpURLConnection c = (HttpURLConnection) new URL(PhotoAlbum.sized(base, w, h)).openConnection();
+            HttpURLConnection c = (HttpURLConnection) new URL(PhotoAlbum.sized(base, Math.max(w, h) * 5 / 4, 0)).openConnection();
             c.setConnectTimeout(10000);
             c.setReadTimeout(20000);
             InputStream in = c.getInputStream();
