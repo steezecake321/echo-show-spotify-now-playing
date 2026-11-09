@@ -372,13 +372,40 @@ public class PhotoDream extends DreamService implements PlayerState.Listener {
 
     /** Fills the screen like center-crop, but keeps the upper part of tall pictures so heads stay in frame. */
     private Matrix cropMatrix(Bitmap b) {
-        float scale = Math.max(w / (float) b.getWidth(), h / (float) b.getHeight());
+        // follow the current screen orientation
+        w = getResources().getDisplayMetrics().widthPixels;
+        h = getResources().getDisplayMetrics().heightPixels;
+        float fit = Math.min(w / (float) b.getWidth(), h / (float) b.getHeight());
+        float fill = Math.max(w / (float) b.getWidth(), h / (float) b.getHeight());
+        // show the whole picture; only zoom in (at most 8%) when that closes small gaps. Bigger mismatches get bars.
+        float scale = Math.min(fill, fit * 1.08f);
         float dx = (w - b.getWidth() * scale) / 2f;
-        float dy = (h - b.getHeight() * scale) * 0.25f;   // 0 = top edge, 0.5 = centre
+        float dy = (h - b.getHeight() * scale) * 0.35f;   // 0 = top edge, 0.5 = centre
         Matrix m = new Matrix();
         m.setScale(scale, scale);
         m.postTranslate(dx, dy);
         return m;
+    }
+
+    /** A dimmed, blurred copy of the picture that fills the screen behind it (where the picture leaves bars). */
+    private BitmapDrawable blurredBackdrop(Bitmap b) {
+        try {
+            // centre-crop to the screen's shape, then shrink to a tiny size; stretching it back up gives a cheap blur
+            float screen = w / (float) h;
+            int cw = b.getWidth(), ch = b.getHeight();
+            if (cw / (float) ch > screen) cw = Math.round(ch * screen);
+            else ch = Math.round(cw / screen);
+            Bitmap crop = Bitmap.createBitmap(b, (b.getWidth() - cw) / 2, (b.getHeight() - ch) / 2, cw, ch);
+            int tw = 24;
+            Bitmap tiny = Bitmap.createScaledBitmap(crop, tw, Math.max(1, Math.round(tw / screen)), true);
+            if (crop != b) crop.recycle();
+            BitmapDrawable d = new BitmapDrawable(getResources(), tiny);
+            d.setFilterBitmap(true);
+            d.setColorFilter(0xFF8A8A8A, android.graphics.PorterDuff.Mode.MULTIPLY);   // dim it
+            return d;
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     /** Crossfades the new picture in over the current one, with a slow zoom. */
@@ -389,6 +416,7 @@ public class PhotoDream extends DreamService implements PlayerState.Listener {
         in.animate().cancel();
         in.setImageBitmap(next);
         in.setImageMatrix(cropMatrix(next));
+        in.setBackground(blurredBackdrop(next));
         in.setScaleX(1f);
         in.setScaleY(1f);
         in.setAlpha(0f);
@@ -401,8 +429,8 @@ public class PhotoDream extends DreamService implements PlayerState.Listener {
             out.setImageDrawable(null);
             if (old != null && old != next) old.recycle();
         }).start();
-        ObjectAnimator zx = ObjectAnimator.ofFloat(in, View.SCALE_X, 1f, 1.08f);
-        ObjectAnimator zy = ObjectAnimator.ofFloat(in, View.SCALE_Y, 1f, 1.08f);
+        ObjectAnimator zx = ObjectAnimator.ofFloat(in, View.SCALE_X, 1f, 1.12f);
+        ObjectAnimator zy = ObjectAnimator.ofFloat(in, View.SCALE_Y, 1f, 1.12f);
         for (ObjectAnimator z : new ObjectAnimator[]{zx, zy}) {
             z.setDuration(SHOW_MS + FADE_MS);
             z.setInterpolator(new LinearInterpolator());
