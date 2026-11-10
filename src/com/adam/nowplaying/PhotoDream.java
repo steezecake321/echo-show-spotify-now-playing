@@ -429,8 +429,8 @@ public class PhotoDream extends DreamService implements PlayerState.Listener {
             out.setImageDrawable(null);
             if (old != null && old != next) old.recycle();
         }).start();
-        ObjectAnimator zx = ObjectAnimator.ofFloat(in, View.SCALE_X, 1f, 1.12f);
-        ObjectAnimator zy = ObjectAnimator.ofFloat(in, View.SCALE_Y, 1f, 1.12f);
+        ObjectAnimator zx = ObjectAnimator.ofFloat(in, View.SCALE_X, 1f, 1.25f);
+        ObjectAnimator zy = ObjectAnimator.ofFloat(in, View.SCALE_Y, 1f, 1.25f);
         for (ObjectAnimator z : new ObjectAnimator[]{zx, zy}) {
             z.setDuration(SHOW_MS + FADE_MS);
             z.setInterpolator(new LinearInterpolator());
